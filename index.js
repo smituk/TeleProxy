@@ -185,6 +185,7 @@ class TeleProxy {
     _close_connection(ws) {
         console.log('connection failed to node: ' + ws.url);
         this.sockets.splice(this.sockets.indexOf(ws), 1);
+        if(!ws.url) return;
         const adr = ws.url.match(/(\d+\.\d+\.\d+\.\d+)/);
         if(!adr || !adr[1]) return;
 
