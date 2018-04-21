@@ -82,7 +82,7 @@ class TeleProxy {
             if(this._is_gosip(req.headers['x-forwarded-for'] || req.connection.remoteAddress)) {
                 return res.status(503).send('');
             }
-            res.send('<html><head><style>html,body{margin:0;padding:0;font-family:Verdana}</style><meta http-equiv="refresh" content="5"/></head><body>'+
+            res.send('<html><head><style>html,body{margin:0;padding:0;font-family:Verdana}</style><meta http-equiv="refresh" content="60"/></head><body>'+
                 '<div style="width: 60%; text-align: left; margin: 5% auto">' + this.nodes.map(n => {
                 return `<p><a href="https://t.me/socks?server=${n}&port=${this.proxy_port}">[ https://t.me/ ]</a> 
                         <a href="tg://socks?server=${n}&port=${this.proxy_port}">[ tg:// ]</a> 
