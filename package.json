@@ -9,7 +9,9 @@
     "express" : ">=4.11.1",
     "ws" : ">=5.1.1",
     "ip" : ">=1.1.5",
-    "socksv5" : ">=0.0.6"
+    "socksv5" : ">=0.0.6",
+    "ip-utils" : ">=2.4.0",
+    "request" : ">=2.85.0"
   },
   "devDependencies" : {}
 }
