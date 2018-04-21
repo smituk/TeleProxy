@@ -26,4 +26,6 @@ The next is to install app:
 * ./install.sh
 
 
+Some of ready to use Socks proxies is here http://teleproxy.org:3001/
+
 Best Regards.
