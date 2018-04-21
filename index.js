@@ -188,7 +188,9 @@ class TeleProxy {
         const adr = ws.url.match(/(\d+\.\d+\.\d+\.\d+)/);
         if(!adr || !adr[1]) return;
 
-        setTimeout(() => this._connect_to(adr[1]), 1000 * 60);
+        setTimeout(() => {
+            this._connect_to(adr[1]);
+        }, 1000 * 60);
     };
     _broadcast(message) {
         this.sockets.forEach(socket => this._write(socket, message));
@@ -198,7 +200,7 @@ class TeleProxy {
         return ws.send(JSON.stringify(message));
     }
     _connect_to(peers, t) {
-        peers.forEach((peer) => {
+        (peers||[]).forEach((peer) => {
             if(peer === this.proxy_host) return;
 
             const ws = new WebSocket(`http://${peer}:${this.p2p_port}`);
@@ -207,7 +209,9 @@ class TeleProxy {
                 console.log('connection failed. retry...');
                 if(t) return;
 
-                setTimeout(() => this._connect_to(peers, 1), 1000 * 21);
+                setTimeout(() => {
+                    this._connect_to(peers, 1);
+                }, 1000 * 21);
             });
         });
     };
