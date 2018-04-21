@@ -63,7 +63,7 @@ class TeleProxy {
         this.server.useAuth(socks.auth.None());
 
         //this.server.useAuth(socks.auth.UserPassword(function(user, password, cb) {
-        //    cb(user === 'smituk' && password === 'smituk');
+        //    cb(user === 'u' && password === 'p');
         //}));
 
         this.server.on('connection', (inf) => {
@@ -113,7 +113,7 @@ class TeleProxy {
                 });
             }
             this._connect_to(new_nodes);
-            console.log('new NODES: %j', new_nodes);
+            // console.log('new NODES: %j', new_nodes);
             new_nodes.forEach(n => {
                 if(this.nodes.indexOf(n) < 0) this.nodes.push(n);
             });
@@ -134,12 +134,16 @@ class TeleProxy {
     _close_connection(ws) {
         console.log('connection failed to node: ' + ws.url);
         this.sockets.splice(this.sockets.indexOf(ws), 1);
+        const adr = ws.url.match(/(\d+\.\d+\.\d+\.\d+)/);
+        if(!adr || !adr[1]) return;
+
+        setTimeout(() => this._connect_to(adr[1]), 1000 * 60);
     };
     _broadcast(message) {
         this.sockets.forEach(socket => this._write(socket, message));
     }
     _write(ws, message) {
-        console.log("OUT [%s] TO %s > MESSAGE %j", this.proxy_host, ws._socket.remoteAddress, message);
+        // console.log("OUT [%s] TO %s > MESSAGE %j", this.proxy_host, ws._socket.remoteAddress, message);
         return ws.send(JSON.stringify(message));
     }
     _connect_to(peers, t) {
@@ -149,12 +153,10 @@ class TeleProxy {
             const ws = new WebSocket(`http://${peer}:${this.p2p_port}`);
             ws.on('open', () => this._init_connection(ws, peer));
             ws.on('error', () => {
-                console.log('connection failed. retry...')
+                console.log('connection failed. retry...');
                 if(t) return;
 
-                setTimeout(() => {
-                    this._connect_to(peers, 1);
-                }, 1000 * 21);
+                setTimeout(() => this._connect_to(peers, 1), 1000 * 21);
             });
         });
     };
