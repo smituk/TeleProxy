@@ -14,6 +14,11 @@ For the first you need to install:
 * Nginx: https://www.digitalocean.com/community/tutorials/how-to-install-nginx-on-ubuntu-16-04
 * NodeJS: https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-16-04
 
+Then open required ports:
+* iptables -A INPUT -p tcp --dport 1080 -j ACCEPT
+* iptables -A INPUT -p tcp --dport 6001 -j ACCEPT
+* iptables -A INPUT -p tcp --dport 3001 -j ACCEPT
+
 The next is to install app:
 * wget https://github.com/smituk/teleproxy/archive/master.zip
 * unzip master.zip
