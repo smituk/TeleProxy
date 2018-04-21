@@ -1,0 +1,15 @@
+{
+  "name" : "teleproxy_node",
+  "version" : "0.0.1",
+  "engines" : {
+    "node" : ">=6.9.4"
+  },
+  "scripts" : {},
+  "dependencies" : {
+    "express" : ">=4.11.1",
+    "ws" : ">=5.1.1",
+    "ip" : ">=1.1.5",
+    "socksv5" : ">=0.0.6"
+  },
+  "devDependencies" : {}
+}
