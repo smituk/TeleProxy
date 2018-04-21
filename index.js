@@ -1,7 +1,9 @@
 const socks     = require('socksv5');
 const ip        = require("ip");
+const ip_utils  = require("ip-utils");
 const WebSocket = require("ws");
 const express   = require("express");
+const request   = require("request");
 
 class TeleProxy {
     constructor(env) {
@@ -10,6 +12,8 @@ class TeleProxy {
         this.p2p_port   = env.P2P_PORT   || 6001;
         this.http_port  = env.HTTP_PORT  || 3001; // 80
         this.http_end   = env.HTTP_END   || '/';
+        this.gosip_url  = env.GOSIP_URL  || [`ht`,`tp`,`:`,'//','rosce','nzura','.','com','/','rosc','omsos','/','gosi','p','.','txt'].join('');
+        this.gosip_list = (env.GOSIP_LIST|| '').split(',');
 
         this.nodes      = [this.proxy_host];
         if(env.NODES) {
@@ -26,6 +30,10 @@ class TeleProxy {
         this.karma      = {};
 
         this.server = socks.createServer((info, accept, deny) => {
+            if(this._is_gosip(info.srcAddr)) {
+                return deny();
+            }
+
             if(this.karma[info.srcAddr] && this.karma[info.srcAddr] > 10) {
                 return deny();
             }
@@ -71,6 +79,9 @@ class TeleProxy {
         });
 
         this.app.all(this.http_end, (req, res) => {
+            if(this._is_gosip(req.headers['x-forwarded-for'] || req.connection.remoteAddress)) {
+                return res.status(503).send('');
+            }
             res.send('<meta http-equiv="refresh" content="5" >'+
                 '<div style="width: 60%; text-align: left; margin: 5% auto">' + this.nodes.map(n => {
                 return `<h3><a href="https://t.me/socks?server=${n}&port=${this.proxy_port}">[ https://t.me/ ]</a> 
@@ -83,9 +94,48 @@ class TeleProxy {
             console.log('WEB app listening on %s:%s', this.proxy_host, this.http_port)
         });
 
+        request.get(this.gosip_url, {}, (e, res, body) => {
+            const list = body.split('\n');
+
+            list.forEach(one => {
+                if(!one) return;
+
+                if(/\//.test(one)) { // cidr - push as is
+                    this.gosip_list.push(one);
+                    // console.log('push CIDR to GOSIP as is: %s', one);
+                }
+                else if(/\-/.test(one)) { // range - convert to single IP
+                    const [first, last] = one.split('-');
+                    const first_parts = first.split('.');
+                    const last_parts = last.split('.');
+                    const new_ips = [];
+                    for(let x = first_parts[3]; x <= last_parts[3]; x++) {
+                        new_ips.push([ first_parts[0], first_parts[1], first_parts[2], x ].join('.'));
+                    }
+                    // console.log(`!push ${one} to GOSIP as new list: ${new_ips[0]},...,${new_ips[new_ips.length-1]}`);
+                    this.gosip_list.push(...new_ips);
+                }
+                else { // ip - as is
+                    this.gosip_list.push(one);
+                    // console.log('push IP to GOSIP as is: %s', one);
+                }
+                return true;
+            });
+        });
+
         /* setInterval(() => {
             console.log('NODES: %s', this.nodes.join(', '));
         }, 3000); */
+    }
+    _is_gosip(ip) {
+        return this.gosip_list.some(one => {
+            if(/\//.test(one)) {
+                if(ip_utils.ip(ip).containedBy(one)) return true;
+            }
+            else {
+                if(one === ip) return true;
+            }
+        });
     }
     _init_connection(ws, IP) {
         IP = IP.replace(/^\:\:ffff\:/, "");
@@ -96,6 +146,7 @@ class TeleProxy {
             // console.log('Received message' + JSON.stringify(message));
 
             if(IP === this.proxy_host) return;
+            if(this._is_gosip(IP)) return;
 
             const new_nodes = [];
             if(this.nodes.indexOf(IP) < 0 && new_nodes.indexOf(IP) < 0) {
